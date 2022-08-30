@@ -20,23 +20,27 @@ public class TCPtoUDPForwarder {
      */
     public static void main(String[] args) {
         try {
-            Socket tcpSocket = new Socket(args[0], Integer.parseInt(args[1]));
-            BufferedReader inputStream = new BufferedReader(new InputStreamReader(tcpSocket.getInputStream()));
-            String inputLine;
-            while ((inputLine = inputStream.readLine()) != null) {
-                if (tcpSocket.isInputShutdown() || tcpSocket.isClosed()) {
-                    Thread.sleep(5000);
-                    tcpSocket = new Socket(args[0], Integer.parseInt(args[1]));
-                    inputStream = new BufferedReader(new InputStreamReader(tcpSocket.getInputStream()));
-                    continue;
-                } else if(tcpSocket.isConnected()) {
-                    System.out.println(inputLine);
-                    DatagramSocket udpSocket = new DatagramSocket();
-                    byte[] message = inputLine.getBytes();
-                    DatagramPacket datagramPacket = new DatagramPacket(message, message.length, InetAddress.getByName(args[2]), Integer.parseInt(args[3]));
-                    udpSocket.send(datagramPacket);
-                    udpSocket.close();
+            while (true) {
+                Socket tcpSocket = new Socket(args[0], Integer.parseInt(args[1]));
+                BufferedReader inputStream = new BufferedReader(new InputStreamReader(tcpSocket.getInputStream()));
+                String inputLine;
+                while ((inputLine = inputStream.readLine()) != null) {
+                    if (tcpSocket.isInputShutdown() || tcpSocket.isClosed()) {
+                        Thread.sleep(5000);
+                        tcpSocket = new Socket(args[0], Integer.parseInt(args[1]));
+                        inputStream = new BufferedReader(new InputStreamReader(tcpSocket.getInputStream()));
+                        continue;
+                    } else if (tcpSocket.isConnected()) {
+                        System.out.println(inputLine);
+                        DatagramSocket udpSocket = new DatagramSocket();
+                        byte[] message = inputLine.getBytes();
+                        DatagramPacket datagramPacket = new DatagramPacket(message, message.length, InetAddress.getByName(args[2]), Integer.parseInt(args[3]));
+                        udpSocket.send(datagramPacket);
+                        udpSocket.close();
+                    }
                 }
+                tcpSocket.close();
+                Thread.sleep(5000);
             }
         } catch (IOException e) {
             e.printStackTrace();
