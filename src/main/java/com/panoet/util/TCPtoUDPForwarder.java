@@ -19,34 +19,37 @@ public class TCPtoUDPForwarder {
      *        [3] TCP port to send packet to
      */
     public static void main(String[] args) {
-        try {
             while (true) {
-                Socket tcpSocket = new Socket(args[0], Integer.parseInt(args[1]));
-                BufferedReader inputStream = new BufferedReader(new InputStreamReader(tcpSocket.getInputStream()));
-                String inputLine;
-                while ((inputLine = inputStream.readLine()) != null) {
-                    if (tcpSocket.isInputShutdown() || tcpSocket.isClosed()) {
-                        Thread.sleep(5000);
-                        tcpSocket = new Socket(args[0], Integer.parseInt(args[1]));
-                        inputStream = new BufferedReader(new InputStreamReader(tcpSocket.getInputStream()));
-                        continue;
-                    } else if (tcpSocket.isConnected()) {
-                        System.out.println(inputLine);
-                        DatagramSocket udpSocket = new DatagramSocket();
-                        byte[] message = inputLine.getBytes();
-                        DatagramPacket datagramPacket = new DatagramPacket(message, message.length, InetAddress.getByName(args[2]), Integer.parseInt(args[3]));
-                        udpSocket.send(datagramPacket);
-                        udpSocket.close();
+                try {
+                    System.out.println("Waiting 5 seconds...");
+                    Thread.sleep(5000);
+                    Socket tcpSocket = new Socket(args[0], Integer.parseInt(args[1]));
+                    System.out.println("Connected to TCP source...");
+                    BufferedReader inputStream = new BufferedReader(new InputStreamReader(tcpSocket.getInputStream()));
+                    String inputLine;
+                    while ((inputLine = inputStream.readLine()) != null) {
+                        if (tcpSocket.isInputShutdown() || tcpSocket.isClosed()) {
+                            System.out.println("Socket closed or input stream not available...");
+                            Thread.sleep(5000);
+                            tcpSocket = new Socket(args[0], Integer.parseInt(args[1]));
+                            inputStream = new BufferedReader(new InputStreamReader(tcpSocket.getInputStream()));
+                            continue;
+                        } else if (tcpSocket.isConnected()) {
+                            System.out.println(inputLine);
+                            DatagramSocket udpSocket = new DatagramSocket();
+                            byte[] message = inputLine.getBytes();
+                            DatagramPacket datagramPacket = new DatagramPacket(message, message.length, InetAddress.getByName(args[2]), Integer.parseInt(args[3]));
+                            udpSocket.send(datagramPacket);
+                            udpSocket.close();
+                        }
                     }
+                    System.out.println("No data received, closing socket...");
+                    tcpSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                tcpSocket.close();
-                Thread.sleep(5000);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
     }
 }
